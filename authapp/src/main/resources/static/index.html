@@ -5,7 +5,8 @@
 <title>AuthApp</title>
 <script src="/js/auth.js"></script>
 <script>
-    window.location.href = getToken() ? '/dashboard.html' : '/login.html';
+    const u = getStoredUser();
+    window.location.href = (getToken() && u) ? homeUrlForRole(u.role) : '/login.html';
 </script>
 </head>
 <body></body>

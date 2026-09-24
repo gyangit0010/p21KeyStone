@@ -38,7 +38,7 @@
 
 <script src="/js/auth.js"></script>
 <script>
-    if (getToken()) window.location.href = '/dashboard.html';
+    if (getToken()) window.location.href = homeUrlForRole(getStoredUser().role);
 
     const form = document.getElementById('loginForm');
     const msg = document.getElementById('msg');
@@ -68,7 +68,7 @@
             }
 
             saveSession(data);
-            window.location.href = '/dashboard.html';
+            window.location.href = homeUrlForRole(data.role);
         } catch (err) {
             msg.textContent = 'Could not reach the server. Try again.';
             msg.className = 'msg error';

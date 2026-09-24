@@ -23,4 +23,12 @@ public class SignupRequest {
 
     @NotNull(message = "Role is required")
     private Role role;
+
+    /**
+     * Required only when role == LOCAL_CUSTOMER — becomes the Customer
+     * (company/account) this user's portal is scoped to. Validated
+     * conditionally in AuthService rather than with @NotBlank here, since
+     * it's optional for every other role.
+     */
+    private String companyName;
 }

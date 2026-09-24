@@ -35,6 +35,16 @@ public class User {
     @Column(nullable = false, length = 30)
     private Role role;
 
+    /**
+     * Only set when role == LOCAL_CUSTOMER. This is the company/account the
+     * user represents, and it's what every customer-portal query is scoped
+     * by — it is never taken from client input, only from the authenticated
+     * principal.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 

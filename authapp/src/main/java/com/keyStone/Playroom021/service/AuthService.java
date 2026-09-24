@@ -3,7 +3,10 @@ package com.keyStone.Playroom021.service;
 import com.keyStone.Playroom021.dto.AuthResponse;
 import com.keyStone.Playroom021.dto.LoginRequest;
 import com.keyStone.Playroom021.dto.SignupRequest;
+import com.keyStone.Playroom021.entity.Customer;
+import com.keyStone.Playroom021.entity.Role;
 import com.keyStone.Playroom021.entity.User;
+import com.keyStone.Playroom021.repository.CustomerRepository;
 import com.keyStone.Playroom021.repository.UserRepository;
 import com.keyStone.Playroom021.security.CustomUserDetails;
 import com.keyStone.Playroom021.security.JwtUtil;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final CustomerRepository customerRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -33,12 +37,26 @@ public class AuthService {
             throw new IllegalArgumentException("An account with this email already exists");
         }
 
-        User user = User.builder()
+        if (request.getRole() == Role.LOCAL_CUSTOMER &&
+                (request.getCompanyName() == null || request.getCompanyName().isBlank())) {
+            throw new IllegalArgumentException("Company name is required for a customer account");
+        }
+
+        User.UserBuilder userBuilder = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
-                .build();
+                .role(request.getRole());
+
+        if (request.getRole() == Role.LOCAL_CUSTOMER) {
+            Customer customer = customerRepository.save(Customer.builder()
+                    .companyName(request.getCompanyName().trim())
+                    .contactEmail(request.getEmail())
+                    .build());
+            userBuilder.customer(customer);
+        }
+
+        User user = userBuilder.build();
 
         try {
             user = userRepository.save(user);
@@ -54,6 +72,7 @@ public class AuthService {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .role(user.getRole().name())
+                .companyName(user.getCustomer() != null ? user.getCustomer().getCompanyName() : null)
                 .build();
     }
 
@@ -75,6 +94,7 @@ public class AuthService {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .role(user.getRole().name())
+                .companyName(user.getCustomer() != null ? user.getCustomer().getCompanyName() : null)
                 .build();
     }
 

@@ -71,7 +71,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/", "/index.html", "/login.html", "/signup.html",
-                                "/dashboard.html", "/css/**", "/js/**", "/favicon.ico").permitAll()
+                                "/dashboard.html", "/customer-portal.html", "/css/**", "/js/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/api/customer/**").hasRole("LOCAL_CUSTOMER")
                         .requestMatchers("/api/dashboard/manager").hasRole("MANAGER")
                         .requestMatchers("/api/dashboard/customer").hasRole("LOCAL_CUSTOMER")
                         .requestMatchers("/api/dashboard/worker").hasRole("LOCAL_WORKER")

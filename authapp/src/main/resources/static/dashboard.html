@@ -43,6 +43,9 @@
     if (!requireAuthOrRedirect()) { /* redirected */ }
 
     const user = getStoredUser();
+    if (user.role === 'LOCAL_CUSTOMER') {
+        window.location.href = '/customer-portal.html';
+    }
     document.getElementById('kvName').textContent = user.fullName;
     document.getElementById('kvEmail').textContent = user.email;
     document.getElementById('kvRole').textContent = roleLabel(user.role);

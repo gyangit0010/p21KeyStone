@@ -9,10 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthResponse {
-    private String token;
-    private String fullName;
-    private String email;
-    private String role;
-    private String companyName; // null unless role == LOCAL_CUSTOMER
+public class SiteResponse {
+    private Long id;
+    private String name;
+    private String addressLine;
+    private String city;
 }

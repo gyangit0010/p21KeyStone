@@ -67,3 +67,7 @@ function roleLabel(role) {
     };
     return labels[role] || role;
 }
+
+function homeUrlForRole(role) {
+    return role === 'LOCAL_CUSTOMER' ? '/customer-portal.html' : '/dashboard.html';
+}

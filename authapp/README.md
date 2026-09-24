@@ -62,7 +62,65 @@ mvn spring-boot:run
 Then open **http://localhost:8080** — it redirects to the login page if
 you're signed out, or the dashboard if you already have a token.
 
-## 5. Try the API directly
+## Customer Portal
+
+Signing up (or logging in) with role `LOCAL_CUSTOMER` lands on `/customer-portal.html`
+instead of the generic dashboard. Every customer account is linked 1:1 to a `Customer`
+record (the company — e.g. "ABC Office Pvt Ltd") created automatically at signup from
+the `companyName` field. From there, a customer can:
+
+- **Raise a service request** — creates a `WorkOrder` (`WO-xxxx`) with status `NEW`, an
+  auto-generated `WO-1001`-style code, and an SLA due time computed from priority
+  (Critical: 4h, High: 24h, Medium: 48h, Low: 72h).
+- **Select their site** — sites (e.g. "Noida Office") belong to a customer; the portal
+  includes a simple "Add site" form since site setup isn't wired to a separate ops/manager
+  module yet.
+- **See their work orders** — a table of everything they've raised: code, title, site,
+  priority, status, SLA due date, assigned technician (or "Unassigned").
+- **Track status / view history** — clicking a work order opens its full detail, including
+  the append-only status-change history (`WorkOrderStatusHistory`), seeded with a "Service
+  request raised by customer" entry at creation.
+
+### How customer isolation is enforced
+This is the important part, so it's enforced at more than one layer:
+1. `/api/customer/**` is restricted to `hasRole("LOCAL_CUSTOMER")` in `SecurityConfig` —
+   no other role can call these endpoints at all.
+2. `CustomerPortalService` never takes a `customerId` from the request. It always reads
+   the caller's own `Customer` off the authenticated JWT principal
+   (`principal.getUser().getCustomer()`), and every repository query is scoped by that id
+   from the start — e.g. `findByIdAndCustomerId(id, customerId)` — so a work order or site
+   belonging to a different customer simply isn't a match. There's no separate "is this
+   mine?" check to forget to add.
+3. Fetching another customer's work order by guessing its id returns a plain `404`, the
+   same response as an id that doesn't exist — the API never confirms that someone else's
+   record exists.
+
+### Work order domain model
+- `Customer` — the company/account (1:1 with a `LOCAL_CUSTOMER` user for now).
+- `Site` — a physical location, belongs to exactly one `Customer`.
+- `WorkOrder` — the central object: code, title, description, customer, site, priority,
+  status, assigned technician (nullable — no assignment workflow yet), SLA due time,
+  created/updated timestamps.
+- `WorkOrderStatusHistory` — append-only audit trail of every status change on a work order.
+
+### New customer endpoints
+```
+GET  /api/customer/sites
+POST /api/customer/sites            { name, addressLine, city }
+GET  /api/customer/work-orders      (optional ?status=NEW|ASSIGNED|IN_PROGRESS|...)
+GET  /api/customer/work-orders/{id}
+POST /api/customer/work-orders      { siteId, title, description, priority }
+```
+
+### Not built yet (by design — out of scope for the customer portal)
+- Manager/dispatcher UI to assign a technician and move a work order through
+  `ASSIGNED → IN_PROGRESS → RESOLVED → CLOSED`.
+- Technician-facing portal.
+- Parts and time-tracking on a work order.
+
+## API quick reference
+
+
 ```bash
 # Sign up
 curl -X POST http://localhost:8080/api/auth/signup \
